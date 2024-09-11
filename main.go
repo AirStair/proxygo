@@ -3,6 +3,7 @@ package main
 import "net/http"
 import "log"
 import "fmt"
+//import "html"
 import "io"
 
 func main() {
@@ -23,8 +24,7 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		fmt.Printf("%s", body)
+		fmt.Fprintf(w, "%s", body)
 	})
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
-
