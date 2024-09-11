@@ -8,14 +8,17 @@ import "io"
 func main() {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		reqHostname := r.URL.Query().Get("q")
-		res, err := http.Get(reqHostname)
+		reqMethod := r.Method
+		client := &http.Client{}
+		req, err := http.NewRequest(reqMethod, reqHostname, nil)
+		resp, err := client.Do(req)
 		if err != nil {
 			log.Fatal(err)
 		}
-		body, err := io.ReadAll(res.Body)
-		res.Body.Close()
-		if res.StatusCode > 299 {
-			log.Fatalf("Response failed with status code: %d and\nbody: %s\n", res.StatusCode, body)
+		body, err := io.ReadAll(resp.Body)
+		resp.Body.Close()
+		if resp.StatusCode > 299 {
+			log.Fatalf("Response failed with status code: %d and\nbody: %s\n", resp.StatusCode, body)
 		}
 		if err != nil {
 			log.Fatal(err)
@@ -24,3 +27,4 @@ func main() {
 	})
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
+
