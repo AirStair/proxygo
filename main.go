@@ -3,7 +3,6 @@ package main
 import "net/http"
 import "log"
 import "fmt"
-//import "html"
 import "io"
 
 func main() {
