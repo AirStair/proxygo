@@ -1,30 +1,39 @@
 package main
 
-import "net/http"
-import "log"
-import "fmt"
-//import "html"
-import "io"
+import (
+	"io"
+	"log"
+	"net"
+	"fmt"
+)
 
 func main() {
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		reqHostname := r.URL.Query().Get("q")
-		reqMethod := r.Method
-		client := &http.Client{}
-		req, err := http.NewRequest(reqMethod, reqHostname, nil)
-		resp, err := client.Do(req)
+	// Listen on TCP port 2000 on all available unicast and
+	// anycast IP addresses of the local system.
+	l, err := net.Listen("tcp", ":2000")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer l.Close()
+	for {
+		// Wait for a connection.
+		conn, err := l.Accept()
 		if err != nil {
 			log.Fatal(err)
 		}
-		body, err := io.ReadAll(resp.Body)
-		resp.Body.Close()
-		if resp.StatusCode > 299 {
-			log.Fatalf("Response failed with status code: %d and\nbody: %s\n", resp.StatusCode, body)
-		}
-		if err != nil {
-			log.Fatal(err)
-		}
-		fmt.Fprintf(w, "%s", body)
-	})
-	log.Fatal(http.ListenAndServe(":8080", nil))
+		// Handle the connection in a new goroutine.
+		// The loop then returns to accepting, so that
+		// multiple connections may be served concurrently.
+		go func(c net.Conn) {
+			b, err := io.ReadAll(c)
+			if err != nil {
+				log.Fatal(err)
+			}
+			fmt.Printf("%s", b)
+			// Echo all incoming data.
+			io.Copy(c, c)
+			// Shut down the connection.
+			c.Close()
+		}(conn)
+	}
 }
